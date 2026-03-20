@@ -5,10 +5,10 @@ import pandas as pd
 import re
 import urllib.request
 
-# Configuration V9
+# Configuration V10
 st.set_page_config(page_title="Revue de presse Tech", page_icon="🖥️", layout="wide")
 
-# --- STYLE CSS V9 ---
+# --- STYLE CSS V10 ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -18,15 +18,14 @@ st.markdown(f"""
     
     h1 {{ color: #ffffff !important; font-family: 'Inter', sans-serif !important; text-align: left; font-weight: 800; margin-bottom: 20px; }}
 
-    /* Barre de recherche */
-    .stTextInput>div>div>input {{
+    /* Inputs (Recherche et Selectbox) */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div {{
         background-color: rgba(255, 255, 255, 0.05) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px !important;
     }}
-    .stTextInput>div>div>input:focus {{ border-color: #c1002c !important; box-shadow: 0 0 0 1px #c1002c !important; }}
-
+    
     /* Cartes */
     .card {{ 
         background: rgba(255, 255, 255, 0.08);
@@ -52,7 +51,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- LOGIQUE DE DONNÉES AMÉLIORÉE ---
+# --- SOURCES ---
 RSS_FEEDS = {
     "TechPowerUp": "https://www.techpowerup.com/rss/news",
     "Hardware & Co": "https://hardwareand.co/actualites?format=feed&type=rss",
@@ -71,43 +70,25 @@ YOUTUBE_CHANNELS = {
 @st.cache_data(ttl=600)
 def fetch_content(source_dict, is_youtube=False):
     all_data = []
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-    
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
     for name, url in source_dict.items():
         try:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req) as response:
                 feed = feedparser.parse(response.read())
-            
             for entry in feed.entries:
                 try:
                     dt = datetime(*entry.published_parsed[:6])
                     img = ""
-                    
                     if is_youtube:
                         v_id = entry.link.split("v=")[1].split("&")[0] if "v=" in entry.link else entry.id.split(":")[-1]
                         img = f"https://img.youtube.com/vi/{v_id}/hqdefault.jpg"
                         summary = ""
                     else:
-                        # 1. Tentative media_content
-                        if 'media_content' in entry:
-                            img = entry.media_content[0]['url']
-                        # 2. Tentative liens enclosures
-                        elif 'enclosures' in entry and len(entry.enclosures) > 0:
-                            img = entry.enclosures[0]['href']
-                        # 3. Tentative Extraction HTML dans le résumé
-                        else:
-                            content = entry.get("summary", "") + entry.get("description", "")
-                            img_match = re.search(r'<img [^>]*src="([^"]+)"', content)
-                            if img_match:
-                                img = img_match.group(1)
-                        
-                        # Image de secours si rien n'est trouvé
-                        if not img or "http" not in img:
-                            img = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80" # Image hardware retro
-                            
+                        img = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800"
+                        if 'media_content' in entry: img = entry.media_content[0]['url']
+                        elif 'enclosures' in entry and len(entry.enclosures) > 0: img = entry.enclosures[0]['href']
                         summary = re.sub('<[^<]+?>', '', entry.get("summary", ""))[:110] + "..."
-                    
                     all_data.append({"source": name, "title": entry.title, "link": entry.link, "date": dt, "image": img, "summary": summary, "is_video": is_youtube})
                 except: continue
         except: continue
@@ -118,24 +99,41 @@ st.title("Revue de presse Tech")
 
 if 'view' not in st.session_state: st.session_state.view = 'Articles'
 
+# Navigation
 c1, c2, _ = st.columns([1.2, 1.2, 4])
 if c1.button("ARTICLES PRESSE", use_container_width=True, type="primary" if st.session_state.view == 'Articles' else "secondary"):
     st.session_state.view = 'Articles'; st.rerun()
 if c2.button("VIDEOS YOUTUBE", use_container_width=True, type="primary" if st.session_state.view == 'Videos' else "secondary"):
     st.session_state.view = 'Videos'; st.rerun()
 
-col_search, _ = st.columns([2.5, 5]) 
+st.write("")
+
+# Barre de recherche et Filtre Source (Alignés à gauche)
+col_search, col_filter, col_spacer = st.columns([2.5, 2, 3]) 
+
 with col_search:
     search_query = st.text_input("", placeholder="Rechercher...", label_visibility="collapsed")
 
+with col_filter:
+    # Liste dynamique des sources selon la vue
+    source_list = ["Toutes les sources"] + list(RSS_FEEDS.keys() if st.session_state.view == 'Articles' else YOUTUBE_CHANNELS.keys())
+    selected_source = st.selectbox("", options=source_list, label_visibility="collapsed")
+
 st.divider()
 
+# Récupération et Filtrage
 df = fetch_content(RSS_FEEDS if st.session_state.view == 'Articles' else YOUTUBE_CHANNELS, is_youtube=(st.session_state.view == 'Videos'))
 
 if not df.empty:
+    # Filtre Recherche
     if search_query:
         df = df[df['title'].str.contains(search_query, case=False, na=False)]
     
+    # Filtre Source
+    if selected_source != "Toutes les sources":
+        df = df[df['source'] == selected_source]
+
+    # Affichage Grille
     cols = st.columns(4)
     for idx, row in df.reset_index().iterrows():
         with cols[idx % 4]:
@@ -145,10 +143,10 @@ if not df.empty:
                     <div class="card-body">
                         <div class="card-source">{row['source']}</div>
                         <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
-                        <div class="card-summary">{row['summary'] if not row['is_video'] else ''}</div>
+                        <div class="card-summary">{row['summary']}</div>
                         <div class="card-date">{row['date'].strftime('%d %b %Y')}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
 else:
-    st.info("Chargement des flux...")
+    st.info("Aucun contenu disponible pour le moment.")
