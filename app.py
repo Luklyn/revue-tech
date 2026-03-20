@@ -418,7 +418,16 @@ elif filtered.empty:
     </div>""", unsafe_allow_html=True)
 
 else:
-    cols = st.columns(4)
+    # Build the entire grid as ONE html block to avoid Streamlit's
+    # per-call markdown sanitisation that strips custom classes.
+    n_cols = 4
+    col_cards = [[] for _ in range(n_cols)]
     for idx, (_, row) in enumerate(filtered.reset_index(drop=True).iterrows()):
-        with cols[idx % 4]:
-            st.markdown(card_html(row), unsafe_allow_html=True)
+        col_cards[idx % n_cols].append(card_html(row))
+
+    grid_html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;">'
+    for col in col_cards:
+        grid_html += '<div>' + ''.join(col) + '</div>'
+    grid_html += '</div>'
+
+    st.markdown(grid_html, unsafe_allow_html=True)
