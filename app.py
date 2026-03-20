@@ -52,6 +52,8 @@ RSS_FEEDS = {
     "Hardware.fr": "https://www.hardware.fr/backend/news.xml",
     "Frandroid": "https://www.frandroid.com/produits/pc-ordinateurs/feed",
     "Les Numériques": "https://www.lesnumeriques.com/rss.xml",
+    "Tom's Hardware FR": "https://www.tomshardware.fr/feed/",
+    "Tom's Hardware US": "https://www.tomshardware.com/feeds/all",
 }
 
 YOUTUBE_CHANNELS = {
