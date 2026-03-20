@@ -5,10 +5,15 @@ import pandas as pd
 import re
 import urllib.request
 
-# Configuration
-st.set_page_config(page_title="Revue de presse Tech", page_icon="🖥️", layout="wide")
+# Configuration avec la Sidebar ouverte par défaut
+st.set_page_config(
+    page_title="Revue de presse Tech", 
+    page_icon="🖥️", 
+    layout="wide",
+    initial_sidebar_state="expanded" # Force l'ouverture de la sidebar
+)
 
-# V3 - Style CSS complet avec ajustements pour la Sidebar
+# V4 - Style CSS (Ajout du blocage de la sidebar)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -22,6 +27,11 @@ st.markdown("""
         background-color: #000000 !important;
     }
     header {visibility: hidden;}
+
+    /* Cacher le bouton pour fermer la sidebar (la rend vraiment persistante) */
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
 
     /* Boutons de navigation (Articles / Vidéos) */
     div.stButton > button:first-child {
@@ -133,7 +143,7 @@ def fetch_content(source_dict, is_youtube=False):
     return pd.DataFrame(all_data).sort_values(by="date", ascending=False) if not pd.DataFrame(all_data).empty else pd.DataFrame()
 
 # --- SIDEBAR : RECHERCHE & FILTRES ---
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3067/3067260.png", width=50) # Petite icône stylée (optionnelle)
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3067/3067260.png", width=50)
 st.sidebar.header("Recherche & Filtres")
 
 # 1. Recherche libre
@@ -169,12 +179,9 @@ df = fetch_content(RSS_FEEDS if st.session_state.menu_selection == 'Articles' el
 
 if not df.empty:
     
-    # Appliquer le filtre de recherche libre
     if search_query:
-        # Regex case=False permet de chercher sans se soucier des majuscules/minuscules
         df = df[df['title'].str.contains(search_query, case=False, regex=True, na=False)]
         
-    # Appliquer le filtre de catégorie
     if category != "Toutes les news":
         keywords_dict = {
             "Hardware & Composants": "cpu|gpu|nvidia|intel|amd|ryzen|rtx|radeon|carte mère|ssd|ram|processeur",
