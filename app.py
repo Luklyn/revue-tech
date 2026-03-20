@@ -5,10 +5,10 @@ import pandas as pd
 import re
 import urllib.request
 
-# Configuration V7
+# Configuration V8
 st.set_page_config(page_title="Revue de presse Tech", page_icon="🖥️", layout="wide")
 
-# --- STYLE CSS V7 ---
+# --- STYLE CSS V8 ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -21,18 +21,18 @@ st.markdown(f"""
     h1 {{ 
         color: #ffffff !important; 
         font-family: 'Inter', sans-serif !important; 
-        text-align: left; /* CORRECTION : Alignement à gauche */
+        text-align: left;
         font-weight: 800;
         margin-bottom: 20px; 
     }}
 
-    /* Barre de recherche personnalisée */
+    /* Barre de recherche personnalisée - Aligné gauche via colonnes */
     .stTextInput>div>div>input {{
         background-color: rgba(255, 255, 255, 0.05) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px !important;
-        padding: 8px 15px !important; /* Légèrement plus compact */
+        padding: 8px 15px !important;
     }}
     .stTextInput>div>div>input:focus {{
         border-color: #c1002c !important;
@@ -124,11 +124,12 @@ if col_nav1.button("ARTICLES PRESSE", use_container_width=True, type="primary" i
 if col_nav2.button("VIDEOS YOUTUBE", use_container_width=True, type="primary" if st.session_state.view == 'Videos' else "secondary"):
     st.session_state.view = 'Videos'; st.rerun()
 
-# 2. Barre de recherche (Réduite et centrée)
-st.write("") # Petit espacement
-col_search1, col_search2, col_search3 = st.columns([1, 2, 3]) # Structure pour réduire la largeur
-with col_search2:
-    search_query = st.text_input("", placeholder="Rechercher un sujet (ex: RTX 5090, Intel...)", label_visibility="collapsed")
+# 2. Barre de recherche (Alignée à gauche)
+st.write("") 
+# On utilise une colonne large à gauche pour l'input et du vide à droite
+col_search, col_spacer = st.columns([2.5, 5]) 
+with col_search:
+    search_query = st.text_input("", placeholder="Rechercher un sujet...", label_visibility="collapsed")
 
 st.divider()
 
