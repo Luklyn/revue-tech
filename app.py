@@ -5,10 +5,10 @@ import pandas as pd
 import re
 import urllib.request
 
-# Configuration V10
+# Configuration V11
 st.set_page_config(page_title="Revue de presse Tech", page_icon="🖥️", layout="wide")
 
-# --- STYLE CSS V10 ---
+# --- STYLE CSS V11 (Date réactivée et stylisée) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -34,17 +34,28 @@ st.markdown(f"""
         border-radius: 10px;
         margin-bottom: 25px; 
         overflow: hidden; 
-        height: 320px; 
+        height: 330px; /* Légèrement augmenté pour la date */
         transition: all 0.3s ease;
     }}
     .card:hover {{ border-color: rgba(193, 0, 44, 0.8); transform: translateY(-5px); }}
     
     .card-img {{ width: 100%; height: 160px; object-fit: cover; background-color: #111; }}
-    .card-body {{ padding: 15px; }}
+    .card-body {{ padding: 15px; position: relative; height: 170px; }} /* Structure pour fixer la date en bas */
     .card-source {{ color: #c1002c !important; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }}
     .card-title a {{ text-decoration: none; color: #ffffff !important; font-size: 14px; font-weight: 700; line-height: 1.4; }}
     .card-summary {{ font-size: 13px; color: #bbbbbb !important; line-height: 1.4; height: 38px; overflow: hidden; margin-top: 5px; }}
-    .card-date {{ font-size: 11px; color: #666666; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }}
+    
+    /* Style de la Date (Réactivée) */
+    .card-date {{ 
+        font-size: 10px; 
+        color: #666666; 
+        position: absolute; 
+        bottom: 12px; 
+        left: 15px; 
+        right: 15px; 
+        border-top: 1px solid rgba(255,255,255,0.05); 
+        padding-top: 8px; 
+    }}
 
     button[kind="primary"] {{ background-color: #c1002c !important; border: none !important; color: white !important; font-weight: 600 !important; }}
     button[kind="secondary"] {{ background: rgba(255,255,255,0.05) !important; color: white !important; border: 1px solid rgba(255,255,255,0.2) !important; }}
@@ -108,14 +119,13 @@ if c2.button("VIDEOS YOUTUBE", use_container_width=True, type="primary" if st.se
 
 st.write("")
 
-# Barre de recherche et Filtre Source (Alignés à gauche)
+# Barre de recherche et Filtre Source
 col_search, col_filter, col_spacer = st.columns([2.5, 2, 3]) 
 
 with col_search:
     search_query = st.text_input("", placeholder="Rechercher...", label_visibility="collapsed")
 
 with col_filter:
-    # Liste dynamique des sources selon la vue
     source_list = ["Toutes les sources"] + list(RSS_FEEDS.keys() if st.session_state.view == 'Articles' else YOUTUBE_CHANNELS.keys())
     selected_source = st.selectbox("", options=source_list, label_visibility="collapsed")
 
@@ -125,11 +135,8 @@ st.divider()
 df = fetch_content(RSS_FEEDS if st.session_state.view == 'Articles' else YOUTUBE_CHANNELS, is_youtube=(st.session_state.view == 'Videos'))
 
 if not df.empty:
-    # Filtre Recherche
     if search_query:
         df = df[df['title'].str.contains(search_query, case=False, na=False)]
-    
-    # Filtre Source
     if selected_source != "Toutes les sources":
         df = df[df['source'] == selected_source]
 
@@ -144,7 +151,7 @@ if not df.empty:
                         <div class="card-source">{row['source']}</div>
                         <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
                         <div class="card-summary">{row['summary']}</div>
-                        <div class="card-date">{row['date'].strftime('%d %b %Y')}</div>
+                        <div class="card-date">Publié le {row['date'].strftime('%d %b %Y')}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
