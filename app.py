@@ -60,32 +60,36 @@ def fetch_content(source_dict, is_youtube=False):
         except: continue
     return pd.DataFrame(all_data).sort_values(by="date", ascending=False) if not pd.DataFrame(all_data).empty else pd.DataFrame()
 
-# --- STYLE CSS (PRO ET VISIBLE) ---
+# --- STYLE CSS (HIÉRARCHIE VISUELLE RESTAURÉE) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #fafafa; }
+    
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
     header {visibility: hidden;}
     
-    /* Boutons de navigation personnalisés */
-    .nav-container { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-    
+    /* Cartes */
     .card { background: #fff; border: 1px solid #efefef; border-radius: 4px; margin-bottom: 20px; overflow: hidden; height: 320px; transition: all 0.2s ease; }
     .card:hover { border-color: #bbb; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
     .card-img { width: 100%; height: 160px; object-fit: cover; }
     .card-body { padding: 12px; }
+    
+    /* Couleurs de texte pour différenciation */
     .card-source { color: #e63946; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; }
-    .card-title { font-size: 14px; font-weight: 600; line-height: 1.4; margin-bottom: 8px; height: 40px; overflow: hidden; }
-    .card-title a { text-decoration: none; color: #111; }
-    .card-summary { font-size: 13px; color: #666; line-height: 1.4; height: 38px; overflow: hidden; }
+    
+    .card-title { font-size: 14px; font-weight: 700; line-height: 1.4; margin-bottom: 8px; height: 40px; overflow: hidden; }
+    .card-title a { text-decoration: none; color: #111111 !important; } /* TITRE NOIR PROFOND */
+    
+    .card-summary { font-size: 13px; color: #666666; line-height: 1.4; height: 38px; overflow: hidden; } /* CONTENU GRIS */
+    
     .card-date { font-size: 11px; color: #999; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- BARRE DE NAVIGATION HAUTE VISIBILITÉ ---
+# --- NAVIGATION ---
 st.title("Tech Briefing")
 
-col_nav1, col_nav2, col_spacer = st.columns([1, 1, 4])
+col_nav1, col_nav2, col_spacer = st.columns([1.2, 1.2, 4])
 
 with col_nav1:
     if st.button("📰 ARTICLES PRESSE", use_container_width=True, type="primary" if st.session_state.menu_selection == 'Articles' else "secondary"):
@@ -114,7 +118,6 @@ if not df.empty:
     cols = st.columns(4)
     for idx, row in df.reset_index().iterrows():
         with cols[idx % 4]:
-            # Contenu spécifique si c'est une vidéo ou un article
             summary_div = f'<div class="card-summary">{row["summary"]}</div>' if not row["is_video"] else '<div style="height:38px;"></div>'
             
             st.markdown(f"""
