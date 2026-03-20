@@ -5,80 +5,78 @@ import pandas as pd
 import re
 import urllib.request
 
-# Configuration
+# Configuration Responsive
 st.set_page_config(page_title="Revue de presse Tech", page_icon="🖥️", layout="wide")
 
-# --- STYLE CSS (NAVBAR & GLASSMORPHISM) ---
+# --- DESIGN RESPONSIVE & NAVBAR (CSS CUSTOM) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     
+    /* Fond et suppression des marges inutiles */
     .stApp {{ background-color: #000000 !important; }}
-    [data-testid="stAppViewContainer"] {{ background-color: #000000 !important; }}
+    [data-testid="stAppViewContainer"] {{ background-color: #000000 !important; padding-top: 1rem; }}
     header {{visibility: hidden;}}
     
-    /* Navbar Container */
-    .nav-bar {{
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(15px);
-        padding: 10px 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 30px;
-        position: sticky;
-        top: 0;
-        z-index: 999;
-    }}
+    /* Style des titres et textes */
+    h1 {{ color: #ffffff !important; font-family: 'Inter', sans-serif !important; font-size: 1.8rem !important; margin-bottom: 1.5rem; }}
 
-    /* Cartes */
+    /* Cartes Glassmorphism */
     .card {{ 
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(12px);
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        margin-bottom: 25px; 
+        border-radius: 12px;
+        margin-bottom: 20px; 
         overflow: hidden; 
-        height: 310px; 
-        transition: all 0.3s ease;
+        height: 320px; 
+        transition: transform 0.3s ease, border-color 0.3s ease;
     }}
     .card:hover {{ 
         border-color: #c1002c; 
         transform: translateY(-5px);
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.1);
     }}
-    
-    .card-img {{ width: 100%; height: 160px; object-fit: cover; opacity: 0.9; }}
+    .card-img {{ width: 100%; height: 150px; object-fit: cover; border-bottom: 1px solid rgba(255,255,255,0.05); }}
     .card-body {{ padding: 15px; }}
-    .card-source {{ color: #c1002c !important; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }}
-    .card-title a {{ text-decoration: none; color: #ffffff !important; font-size: 14px; font-weight: 700; }}
-    .card-summary {{ font-size: 13px; color: #bbbbbb !important; line-height: 1.4; height: 38px; overflow: hidden; }}
-    .card-date {{ font-size: 11px; color: #666666; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }}
+    .card-source {{ color: #c1002c !important; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }}
+    .card-title a {{ text-decoration: none; color: #ffffff !important; font-size: 14px; font-weight: 700; line-height: 1.3; }}
+    .card-summary {{ font-size: 12px; color: #aaaaaa !important; margin-top: 8px; line-height: 1.4; height: 34px; overflow: hidden; }}
+    .card-date {{ font-size: 10px; color: #555555; margin-top: 10px; }}
+
+    /* Ajustement Responsive des colonnes Streamlit */
+    [data-testid="stHorizontalBlock"] {{
+        align-items: center;
+    }}
 
     /* Boutons de la Navbar */
-    button[kind="primary"] {{ background-color: #c1002c !important; border: none !important; }}
-    button[kind="secondary"] {{ background: rgba(255,255,255,0.05) !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; }}
+    button[kind="primary"] {{ background-color: #c1002c !important; border: none !important; color: white !important; }}
+    button[kind="secondary"] {{ background: rgba(255,255,255,0.08) !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; }}
+    
+    /* Input de recherche */
+    .stTextInput>div>div>input {{
+        background-color: rgba(255,255,255,0.05) !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        border-radius: 20px !important;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- CONFIGURATION DES SOURCES ---
-RSS_FEEDS = {
+# --- LOGIQUE DE DONNÉES ---
+RSS_FEEDS = {{
     "TechPowerUp": "https://www.techpowerup.com/rss/news",
     "Hardware & Co": "https://hardwareand.co/actualites?format=feed&type=rss",
     "Hardware.fr": "https://www.hardware.fr/backend/news.xml",
     "Frandroid": "https://www.frandroid.com/produits/pc-ordinateurs/feed",
     "Les Numériques": "https://www.lesnumeriques.com/informatique/rss.xml",
-}
-
-YOUTUBE_CHANNELS = {
-    "Gamers Nexus": "https://www.youtube.com/feeds/videos.xml?channel_id=UChIs72whgZI9w6d6FhwGGHA",
-    "VCG": "https://www.youtube.com/feeds/videos.xml?channel_id=UCjrj3gdo-KL2S_JN_gdNyPw",
-    "Hardware Canucks": "https://www.youtube.com/feeds/videos.xml?channel_id=UCVn2OUZWZ0V7xC7n0z7nK0w",
-    "Hardware Unboxed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCI8iQa1hv7oV_Z8B35vVuSg"
-}
+}}
 
 @st.cache_data(ttl=600)
-def fetch_content(source_dict, is_youtube=False):
+def fetch_data(source_dict):
     all_data = []
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    headers = {{'User-Agent': 'Mozilla/5.0'}}
     for name, url in source_dict.items():
         try:
             req = urllib.request.Request(url, headers=headers)
@@ -87,88 +85,72 @@ def fetch_content(source_dict, is_youtube=False):
             for entry in feed.entries:
                 try:
                     dt = datetime(*entry.published_parsed[:6])
-                    if is_youtube:
-                        v_id = entry.link.split("v=")[1].split("&")[0] if "v=" in entry.link else entry.id.split(":")[-1]
-                        img = f"https://img.youtube.com/vi/{v_id}/hqdefault.jpg"
-                        summary = ""
-                    else:
-                        img = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800"
-                        if 'media_content' in entry: img = entry.media_content[0]['url']
-                        summary = re.sub('<[^<]+?>', '', entry.get("summary", ""))[:110] + "..."
-                    all_data.append({"source": name, "title": entry.title, "link": entry.link, "date": dt, "image": img, "summary": summary, "is_video": is_youtube})
+                    img = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800"
+                    if 'media_content' in entry: img = entry.media_content[0]['url']
+                    summary = re.sub('<[^<]+?>', '', entry.get("summary", ""))[:100] + "..."
+                    all_data.append({{"source": name, "title": entry.title, "link": entry.link, "date": dt, "image": img, "summary": summary}})
                 except: continue
         except: continue
     return pd.DataFrame(all_data).sort_values(by="date", ascending=False) if all_data else pd.DataFrame()
 
-# --- INITIALISATION ÉTATS ---
-if 'view' not in st.session_state: st.session_state.view = 'Articles'
-if 'category' not in st.session_state: st.session_state.category = 'TOUT'
+# --- NAVBAR UNIFIÉE ---
+# Ligne 1 : Titre + Recherche
+top_col1, top_col2 = st.columns([2, 1])
+with top_col1:
+    st.title("Revue de presse Tech")
+with top_col2:
+    search_query = st.text_input("", placeholder="Rechercher...", label_visibility="collapsed")
 
-# --- NAVBAR HAUTE ---
-st.title("Revue de presse Tech")
+# Ligne 2 : Univers / Catégories (Responsive via colonnes multiples)
+if 'cat' not in st.session_state: st.session_state.cat = "TOUT"
 
-# Colonnes pour la Navbar
-col_mode1, col_mode2, col_spacer, col_search = st.columns([1, 1, 2, 2])
+# On utilise plus de colonnes pour un effet "barre de menu"
+menu_cols = st.columns([1, 1.2, 1, 1.2, 1, 1, 1])
+cats = ["TOUT", "HARDWARE", "PC", "MOBILE", "GAMING", "IA"]
 
-with col_mode1:
-    if st.button("ARTICLES", type="primary" if st.session_state.view == 'Articles' else "secondary", use_container_width=True):
-        st.session_state.view = 'Articles'; st.rerun()
-with col_mode2:
-    if st.button("VIDEOS", type="primary" if st.session_state.view == 'Videos' else "secondary", use_container_width=True):
-        st.session_state.view = 'Videos'; st.rerun()
-with col_search:
-    search_query = st.text_input("", placeholder="Rechercher une news...", label_visibility="collapsed")
-
-# --- BARRE DE CATÉGORIES ---
-st.write("") # Espacement
-cat_cols = st.columns(6)
-categories = ["TOUT", "HARDWARE", "PC", "SMARTPHONE", "GAMING", "IA"]
-
-for i, cat in enumerate(categories):
-    with cat_cols[i]:
-        if st.button(cat, type="primary" if st.session_state.category == cat else "secondary", use_container_width=True):
-            st.session_state.category = cat
-            st.rerun()
+for i, c_name in enumerate(cats):
+    if menu_cols[i].button(c_name, type="primary" if st.session_state.cat == c_name else "secondary", use_container_width=True):
+        st.session_state.cat = c_name
+        st.rerun()
 
 st.divider()
 
-# --- LOGIQUE DE FILTRE ---
-df = fetch_content(RSS_FEEDS if st.session_state.view == 'Articles' else YOUTUBE_CHANNELS, is_youtube=(st.session_state.view == 'Videos'))
+# --- FILTRAGE ET AFFICHAGE ---
+df = fetch_data(RSS_FEEDS)
 
 if not df.empty:
-    # Filtre recherche libre
+    # Filtre Recherche
     if search_query:
         df = df[df['title'].str.lower().str.contains(search_query.lower())]
     
-    # Filtre par catégorie (mots-clés dans le titre)
-    if st.session_state.category != "TOUT":
-        keywords = {
-            "HARDWARE": "cpu|gpu|nvidia|intel|amd|ryzen|rtx|carte mère|ram|ssd",
+    # Filtre Univers
+    if st.session_state.cat != "TOUT":
+        keywords = {{
+            "HARDWARE": "cpu|gpu|nvidia|intel|amd|ryzen|rtx|carte mère|ssd",
             "PC": "ordinateur|laptop|clavier|souris|windows|macbook|dell|asus",
-            "SMARTPHONE": "iphone|android|samsung|pixel|mobile|ios|xiaomi",
-            "GAMING": "jeu|ps5|xbox|nintendo|console|steam|playstation",
-            "IA": "ia|ai|chatgpt|openai|gemini|llm|copilot"
-        }
-        query = keywords.get(st.session_state.category, "")
-        df = df[df['title'].str.lower().str.contains(query)]
+            "MOBILE": "iphone|smartphone|android|samsung|pixel|mobile|ios",
+            "GAMING": "jeu|ps5|xbox|nintendo|console|steam|gaming",
+            "IA": "ia|ai|chatgpt|openai|gemini|llm|intelligence"
+        }}
+        df = df[df['title'].str.lower().str.contains(keywords.get(st.session_state.cat, ""))]
 
-    # Affichage
+    # Grille Responsive (4 colonnes sur PC, Streamlit gère la réduction sur mobile)
     if not df.empty:
-        cols = st.columns(4)
+        grid_cols = st.columns(4)
         for idx, row in df.reset_index().iterrows():
-            with cols[idx % 4]:
+            with grid_cols[idx % 4]:
                 st.markdown(f"""
                     <div class="card">
-                        <img src="{row['image']}" class="card-img">
+                        <img src="{{row['image']}}" class="card-img">
                         <div class="card-body">
-                            <div class="card-source">{row['source']}</div>
-                            <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
-                            <div class="card-summary">{row['summary']}</div>
-                            <div class="card-date">{row['date'].strftime('%d %b %Y')}</div>
+                            <div class="card-source">{{row['source']}}</div>
+                            <div class="card-title"><a href="{{row['link']}}" target="_blank">{{row['title']}}</a></div>
+                            <div class="card-summary">{{row['summary']}}</div>
+                            <div class="card-date">Publié le {{row['date'].strftime('%d/%m/%Y')}}</div>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
     else:
-        st.info("Aucun article ne correspond à cette catégorie ou recherche.")
+        st.info("Aucun résultat pour cette sélection.")
 else:
-    st.info("Chargement des flux...")
+    st.error("Impossible de charger les flux RSS.")
