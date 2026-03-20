@@ -51,7 +51,7 @@ RSS_FEEDS = {
     "Hardware & Co": "https://hardwareand.co/actualites?format=feed&type=rss",
     "Hardware.fr": "https://www.hardware.fr/backend/news.xml",
     "Frandroid": "https://www.frandroid.com/produits/pc-ordinateurs/feed",
-    "Les Numériques": "https://www.lesnumeriques.com/informatique/rss.xml",
+    "Les Numériques": "https://www.lesnumeriques.com/rss.xml",
 }
 
 YOUTUBE_CHANNELS = {
