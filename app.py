@@ -17,7 +17,7 @@ RSS_FEEDS = {
 }
 
 YOUTUBE_CHANNELS = {
-    "Gamers Nexus": "https://www.youtube.com/@GamersNexus/videos",
+    "Gamers Nexus": "https://www.youtube.com/feeds/videos.xml?channel_id=UCPY35SuS86mOxlIc_pT_UvQ",
     "VCG (Vieux Con Gaming)": "https://www.youtube.com/@VC-Gaming/videos",
     "Hardware Canucks": "https://www.youtube.com/@HardwareCanucks/videos",
     "Mr Matt Lee": "https://www.youtube.com/@Mr_Matt_Lee/videos",
