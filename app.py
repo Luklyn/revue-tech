@@ -1,6 +1,6 @@
 import streamlit as st
 import feedparser
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import re
 import urllib.request
@@ -8,42 +8,56 @@ import urllib.request
 # Configuration
 st.set_page_config(page_title="Revue de presse Tech", page_icon="🖥️", layout="wide")
 
-# Injection de la couleur personnalisée et forçage du thème sombre
+# --- STYLE CSS (NAVBAR & GLASSMORPHISM) ---
 st.markdown(f"""
     <style>
-    /* Couleur du bouton primaire (sélectionné) */
-    .stApp {{
-        --primary-color: #c1002c;
-        background-color: #000000 !important; /* FOND NOIR TOTAL */
-    }}
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     
-    /* Forcer le noir sur les conteneurs Streamlit */
-    [data-testid="stAppViewContainer"] {{
-        background-color: #000000 !important;
+    .stApp {{ background-color: #000000 !important; }}
+    [data-testid="stAppViewContainer"] {{ background-color: #000000 !important; }}
+    header {{visibility: hidden;}}
+    
+    /* Navbar Container */
+    .nav-bar {{
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        padding: 10px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 30px;
+        position: sticky;
+        top: 0;
+        z-index: 999;
     }}
 
-    div.stButton > button:first-child {{
-        border-radius: 4px;
-        font-weight: 600;
+    /* Cartes */
+    .card {{ 
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        margin-bottom: 25px; 
+        overflow: hidden; 
+        height: 310px; 
+        transition: all 0.3s ease;
+    }}
+    .card:hover {{ 
+        border-color: #c1002c; 
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.12);
     }}
     
-    /* Style spécifique pour le bouton actif */
-    button[kind="primary"] {{
-        background-color: #c1002c !important;
-        border-color: #c1002c !important;
-        color: white !important;
-    }}
+    .card-img {{ width: 100%; height: 160px; object-fit: cover; opacity: 0.9; }}
+    .card-body {{ padding: 15px; }}
+    .card-source {{ color: #c1002c !important; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }}
+    .card-title a {{ text-decoration: none; color: #ffffff !important; font-size: 14px; font-weight: 700; }}
+    .card-summary {{ font-size: 13px; color: #bbbbbb !important; line-height: 1.4; height: 38px; overflow: hidden; }}
+    .card-date {{ font-size: 11px; color: #666666; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }}
 
-    /* Titre principal en blanc */
-    h1 {{
-        color: #ffffff !important;
-    }}
+    /* Boutons de la Navbar */
+    button[kind="primary"] {{ background-color: #c1002c !important; border: none !important; }}
+    button[kind="secondary"] {{ background: rgba(255,255,255,0.05) !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; }}
     </style>
 """, unsafe_allow_html=True)
-
-# Initialisation du choix de navigation
-if 'menu_selection' not in st.session_state:
-    st.session_state.menu_selection = 'Articles'
 
 # --- CONFIGURATION DES SOURCES ---
 RSS_FEEDS = {
@@ -51,22 +65,15 @@ RSS_FEEDS = {
     "Hardware & Co": "https://hardwareand.co/actualites?format=feed&type=rss",
     "Hardware.fr": "https://www.hardware.fr/backend/news.xml",
     "Frandroid": "https://www.frandroid.com/produits/pc-ordinateurs/feed",
-    "Les Numériques": "https://www.lesnumeriques.com/rss.xml",
-    "Tom's Hardware FR": "https://www.tomshardware.fr/feed/",
-    "Tom's Hardware US": "https://www.tomshardware.com/feeds/all",
+    "Les Numériques": "https://www.lesnumeriques.com/informatique/rss.xml",
 }
 
 YOUTUBE_CHANNELS = {
     "Gamers Nexus": "https://www.youtube.com/feeds/videos.xml?channel_id=UChIs72whgZI9w6d6FhwGGHA",
-    "VCG (Vieux Con Gaming)": "https://www.youtube.com/feeds/videos.xml?channel_id=UCjrj3gdo-KL2S_JN_gdNyPw",
+    "VCG": "https://www.youtube.com/feeds/videos.xml?channel_id=UCjrj3gdo-KL2S_JN_gdNyPw",
     "Hardware Canucks": "https://www.youtube.com/feeds/videos.xml?channel_id=UCVn2OUZWZ0V7xC7n0z7nK0w",
-    "Mr Matt Lee": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbLTf6hZpZkY7kC3Y7x5L9A",
-    "Hardware Unboxed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCI8iQa1hv7oV_Z8B35vVuSg",
-    "Digital Foundry": "https://www.youtube.com/feeds/videos.xml?channel_id=UC9PBzalIcEQCsiIkq36PyUA",
-    "Cowcotland": "https://www.youtube.com/feeds/videos.xml?channel_id=UCQf4V6R9tWw7Qv1ZC7h9w0g"
+    "Hardware Unboxed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCI8iQa1hv7oV_Z8B35vVuSg"
 }
-
-DEFAULT_IMAGE = "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800&auto=format&fit=crop"
 
 @st.cache_data(ttl=600)
 def fetch_content(source_dict, is_youtube=False):
@@ -76,8 +83,7 @@ def fetch_content(source_dict, is_youtube=False):
         try:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req) as response:
-                content = response.read()
-            feed = feedparser.parse(content)
+                feed = feedparser.parse(response.read())
             for entry in feed.entries:
                 try:
                     dt = datetime(*entry.published_parsed[:6])
@@ -86,106 +92,83 @@ def fetch_content(source_dict, is_youtube=False):
                         img = f"https://img.youtube.com/vi/{v_id}/hqdefault.jpg"
                         summary = ""
                     else:
-                        img = DEFAULT_IMAGE
+                        img = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800"
                         if 'media_content' in entry: img = entry.media_content[0]['url']
-                        elif 'links' in entry:
-                            for l in entry.links:
-                                if 'image' in l.get('type', ''): img = l.href
                         summary = re.sub('<[^<]+?>', '', entry.get("summary", ""))[:110] + "..."
                     all_data.append({"source": name, "title": entry.title, "link": entry.link, "date": dt, "image": img, "summary": summary, "is_video": is_youtube})
                 except: continue
         except: continue
-    return pd.DataFrame(all_data).sort_values(by="date", ascending=False) if not pd.DataFrame(all_data).empty else pd.DataFrame()
+    return pd.DataFrame(all_data).sort_values(by="date", ascending=False) if all_data else pd.DataFrame()
 
-# --- STYLE CSS (GLASSMORPHISM SUR FOND NOIR) ---
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
-    header {visibility: hidden;}
+# --- INITIALISATION ÉTATS ---
+if 'view' not in st.session_state: st.session_state.view = 'Articles'
+if 'category' not in st.session_state: st.session_state.category = 'TOUT'
 
-    /* STRUCTURE GLASSMORPHISM POUR LES CARTES */
-    .card { 
-        background: rgba(255, 255, 255, 0.08); /* Très légère blancheur pour l'effet verre */
-        backdrop-filter: blur(12px); /* Flou dépoli prononcé */
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.1); /* Bordure fine translucide */
-        border-radius: 10px;
-        margin-bottom: 20px; 
-        overflow: hidden; 
-        height: 320px; 
-        transition: all 0.3s ease;
-    }
-    
-    .card:hover { 
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(193, 0, 44, 0.8); /* Accent rouge au survol */
-        transform: translateY(-4px); 
-    }
-    
-    .card-img { width: 100%; height: 160px; object-fit: cover; opacity: 0.9; }
-    .card-body { padding: 12px; }
-    
-    /* Couleurs de texte pour Fond Noir */
-    .card-source { color: #c1002c; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; }
-    
-    .card-title { font-size: 14px; font-weight: 700; line-height: 1.4; margin-bottom: 8px; height: 40px; overflow: hidden; }
-    .card-title a { text-decoration: none; color: #ffffff !important; } /* TITRE BLANC */
-    
-    .card-summary { font-size: 13px; color: #bbbbbb; line-height: 1.4; height: 38px; overflow: hidden; } /* RÉSUMÉ GRIS CLAIR */
-    
-    .card-date { font-size: 11px; color: #666666; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
-    
-    /* Barre latérale et recherche */
-    section[data-testid="stSidebar"] {
-        background-color: #111111 !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# --- NAVIGATION ---
+# --- NAVBAR HAUTE ---
 st.title("Revue de presse Tech")
 
-col_nav1, col_nav2, col_spacer = st.columns([1.2, 1.2, 4])
+# Colonnes pour la Navbar
+col_mode1, col_mode2, col_spacer, col_search = st.columns([1, 1, 2, 2])
 
-with col_nav1:
-    if st.button("ARTICLES PRESSE", use_container_width=True, type="primary" if st.session_state.menu_selection == 'Articles' else "secondary"):
-        st.session_state.menu_selection = 'Articles'
-        st.rerun()
+with col_mode1:
+    if st.button("ARTICLES", type="primary" if st.session_state.view == 'Articles' else "secondary", use_container_width=True):
+        st.session_state.view = 'Articles'; st.rerun()
+with col_mode2:
+    if st.button("VIDEOS", type="primary" if st.session_state.view == 'Videos' else "secondary", use_container_width=True):
+        st.session_state.view = 'Videos'; st.rerun()
+with col_search:
+    search_query = st.text_input("", placeholder="Rechercher une news...", label_visibility="collapsed")
 
-with col_nav2:
-    if st.button("VIDEOS YOUTUBE", use_container_width=True, type="primary" if st.session_state.menu_selection == 'Videos' else "secondary"):
-        st.session_state.menu_selection = 'Videos'
-        st.rerun()
+# --- BARRE DE CATÉGORIES ---
+st.write("") # Espacement
+cat_cols = st.columns(6)
+categories = ["TOUT", "HARDWARE", "PC", "SMARTPHONE", "GAMING", "IA"]
+
+for i, cat in enumerate(categories):
+    with cat_cols[i]:
+        if st.button(cat, type="primary" if st.session_state.category == cat else "secondary", use_container_width=True):
+            st.session_state.category = cat
+            st.rerun()
 
 st.divider()
 
-# --- LOGIQUE D'AFFICHAGE ---
-search = st.sidebar.text_input("Rechercher un sujet").lower()
-
-if st.session_state.menu_selection == 'Articles':
-    df = fetch_content(RSS_FEEDS)
-else:
-    df = fetch_content(YOUTUBE_CHANNELS, is_youtube=True)
+# --- LOGIQUE DE FILTRE ---
+df = fetch_content(RSS_FEEDS if st.session_state.view == 'Articles' else YOUTUBE_CHANNELS, is_youtube=(st.session_state.view == 'Videos'))
 
 if not df.empty:
-    if search:
-        df = df[df['title'].str.lower().str.contains(search)]
+    # Filtre recherche libre
+    if search_query:
+        df = df[df['title'].str.lower().str.contains(search_query.lower())]
     
-    cols = st.columns(4)
-    for idx, row in df.reset_index().iterrows():
-        with cols[idx % 4]:
-            summary_div = f'<div class="card-summary">{row["summary"]}</div>' if not row["is_video"] else '<div style="height:38px;"></div>'
-            st.markdown(f"""
-                <div class="card">
-                    <img src="{row['image']}" class="card-img">
-                    <div class="card-body">
-                        <div class="card-source">{row['source']}</div>
-                        <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
-                        {summary_div}
-                        <div class="card-date">Publié le {row['date'].strftime('%d %b %Y')}</div>
+    # Filtre par catégorie (mots-clés dans le titre)
+    if st.session_state.category != "TOUT":
+        keywords = {
+            "HARDWARE": "cpu|gpu|nvidia|intel|amd|ryzen|rtx|carte mère|ram|ssd",
+            "PC": "ordinateur|laptop|clavier|souris|windows|macbook|dell|asus",
+            "SMARTPHONE": "iphone|android|samsung|pixel|mobile|ios|xiaomi",
+            "GAMING": "jeu|ps5|xbox|nintendo|console|steam|playstation",
+            "IA": "ia|ai|chatgpt|openai|gemini|llm|copilot"
+        }
+        query = keywords.get(st.session_state.category, "")
+        df = df[df['title'].str.lower().str.contains(query)]
+
+    # Affichage
+    if not df.empty:
+        cols = st.columns(4)
+        for idx, row in df.reset_index().iterrows():
+            with cols[idx % 4]:
+                st.markdown(f"""
+                    <div class="card">
+                        <img src="{row['image']}" class="card-img">
+                        <div class="card-body">
+                            <div class="card-source">{row['source']}</div>
+                            <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
+                            <div class="card-summary">{row['summary']}</div>
+                            <div class="card-date">{row['date'].strftime('%d %b %Y')}</div>
+                        </div>
                     </div>
-                </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
+    else:
+        st.info("Aucun article ne correspond à cette catégorie ou recherche.")
 else:
-    st.info("Chargement des flux en cours...")
+    st.info("Chargement des flux...")
