@@ -8,7 +8,7 @@ import urllib.request
 # Configuration
 st.set_page_config(page_title="Revue de presse Tech", page_icon="🖥️", layout="wide")
 
-# --- STYLE CSS (FOND NOIR & GLASSMORPHISM) ---
+# Style CSS (Fond noir + Glassmorphism + Rouge #c1002c)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -64,7 +64,7 @@ RSS_FEEDS = {
 
 YOUTUBE_CHANNELS = {
     "Gamers Nexus": "https://www.youtube.com/feeds/videos.xml?channel_id=UChIs72whgZI9w6d6FhwGGHA",
-    "VCG": "https://www.youtube.com/feeds/videos.xml?channel_id=UCjrj3gdo-KL2S_JN_gdNyPw",
+    "VCG (Vieux Con Gaming)": "https://www.youtube.com/feeds/videos.xml?channel_id=UCjrj3gdo-KL2S_JN_gdNyPw",
     "Hardware Canucks": "https://www.youtube.com/feeds/videos.xml?channel_id=UCVn2OUZWZ0V7xC7n0z7nK0w",
     "Mr Matt Lee": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbLTf6hZpZkY7kC3Y7x5L9A",
     "Hardware Unboxed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCI8iQa1hv7oV_Z8B35vVuSg"
