@@ -1,4 +1,4 @@
 streamlit
 feedparser
 pandas
-streamlit-toggle-switch
+google-api-python-client
