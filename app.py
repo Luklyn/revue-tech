@@ -17,11 +17,11 @@ RSS_FEEDS = {
 }
 
 YOUTUBE_CHANNELS = {
-    "Gamers Nexus": "https://www.youtube.com/feeds/videos.xml?channel_id=UCPY35SuS86mOxlIc_pT_UvQ",
+    "Gamers Nexus": "https://www.youtube.com/feeds/videos.xml?channel_id=UChIs72whgZI9w6d6FhwGGHA",
     "VCG (Vieux Con Gaming)": "https://www.youtube.com/feeds/videos.xml?channel_id=UCs6m0wUQfQSdCrGYbtxB1Kw",
-    "Hardware Canucks": "https://www.youtube.com/@HardwareCanucks/videos",
-    "Mr Matt Lee": "https://www.youtube.com/@Mr_Matt_Lee/videos",
-    "Hardware Unboxed": "https://www.youtube.com/@Hardwareunboxed/videos"
+    "Hardware Canucks": "https://www.youtube.com/feeds/videos.xml?channel_id=UCVn2OUZWZ0V7xC7n0z7nK0w",
+    "Mr Matt Lee": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbLTf6hZpZkY7kC3Y7x5L9A",
+    "Hardware Unboxed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCI8iQa1hv7oV_Z8D35vVuSg"
 }
 
 DEFAULT_IMAGE = "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop"
