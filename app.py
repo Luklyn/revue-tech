@@ -1,6 +1,6 @@
 import streamlit as st
 import feedparser
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import re
 import urllib.request
@@ -8,36 +8,76 @@ import urllib.request
 # Configuration
 st.set_page_config(page_title="Revue de presse Tech", page_icon="🖥️", layout="wide")
 
-# V2 - Injection de la couleur personnalisée et forçage du thème sombre
-st.markdown(f"""
-    <style>
-    /* Couleur du bouton primaire (sélectionné) */
-    .stApp {{
+# V3 - Style CSS complet avec ajustements pour la Sidebar
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    
+    /* Forcer le thème sombre */
+    .stApp {
         --primary-color: #c1002c;
         background-color: #000000 !important;
-    }}
-    
-    [data-testid="stAppViewContainer"] {{
+    }
+    [data-testid="stAppViewContainer"] {
         background-color: #000000 !important;
-    }}
+    }
+    header {visibility: hidden;}
 
-    div.stButton > button:first-child {{
+    /* Boutons de navigation (Articles / Vidéos) */
+    div.stButton > button:first-child {
         border-radius: 4px;
         font-weight: 600;
-    }}
-    
-    button[kind="primary"] {{
+    }
+    button[kind="primary"] {
         background-color: #c1002c !important;
         border-color: #c1002c !important;
         color: white !important;
-    }}
+    }
 
-    h1 {{
+    h1 {
         color: #ffffff !important;
         font-weight: 800;
         letter-spacing: -1px;
-    }}
-    </style>
+    }
+
+    /* Cartes Glassmorphism */
+    .card { 
+        background: rgba(255, 255, 255, 0.05); 
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        margin-bottom: 20px; 
+        overflow: hidden; 
+        height: 330px; 
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .card:hover { 
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(193, 0, 44, 0.6); 
+        transform: translateY(-8px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+    
+    .card-img { width: 100%; height: 160px; object-fit: cover; opacity: 0.85; transition: 0.3s; }
+    .card:hover .card-img { opacity: 1; transform: scale(1.05); }
+    
+    .card-body { padding: 15px; }
+    .card-source { color: #c1002c; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; }
+    .card-title { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; height: 40px; overflow: hidden; }
+    .card-title a { text-decoration: none; color: #ffffff !important; }
+    .card-summary { font-size: 13px; color: #999999; line-height: 1.4; height: 38px; overflow: hidden; }
+    .card-date { font-size: 10px; color: #555555; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
+
+    /* Customisation de la Sidebar */
+    section[data-testid="stSidebar"] { 
+        background-color: #0a0a0a !important; 
+        border-right: 1px solid rgba(255,255,255,0.05);
+    }
+    .stRadio label { font-weight: 600; color: #ffffff !important; }
+    
+</style>
 """, unsafe_allow_html=True)
 
 # Initialisation
@@ -92,47 +132,23 @@ def fetch_content(source_dict, is_youtube=False):
         except: continue
     return pd.DataFrame(all_data).sort_values(by="date", ascending=False) if not pd.DataFrame(all_data).empty else pd.DataFrame()
 
-# --- STYLE CSS V2 ---
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
-    header {visibility: hidden;}
+# --- SIDEBAR : RECHERCHE & FILTRES ---
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3067/3067260.png", width=50) # Petite icône stylée (optionnelle)
+st.sidebar.header("Recherche & Filtres")
 
-    .card { 
-        background: rgba(255, 255, 255, 0.05); 
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        margin-bottom: 20px; 
-        overflow: hidden; 
-        height: 330px; 
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    
-    .card:hover { 
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(193, 0, 44, 0.6); 
-        transform: translateY(-8px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-    }
-    
-    .card-img { width: 100%; height: 160px; object-fit: cover; opacity: 0.85; transition: 0.3s; }
-    .card:hover .card-img { opacity: 1; transform: scale(1.05); }
-    
-    .card-body { padding: 15px; }
-    .card-source { color: #c1002c; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; }
-    .card-title { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; height: 40px; overflow: hidden; }
-    .card-title a { text-decoration: none; color: #ffffff !important; }
-    .card-summary { font-size: 13px; color: #999999; line-height: 1.4; height: 38px; overflow: hidden; }
-    .card-date { font-size: 10px; color: #555555; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
+# 1. Recherche libre
+search_query = st.sidebar.text_input("Recherche libre", placeholder="Ex: RTX 5090...")
 
-    section[data-testid="stSidebar"] { background-color: #0a0a0a !important; }
-</style>
-""", unsafe_allow_html=True)
+st.sidebar.markdown("---")
 
-# --- NAVIGATION ---
+# 2. Catégories / Univers
+st.sidebar.subheader("Univers Tech")
+category = st.sidebar.radio(
+    "Filtrer par catégorie :",
+    ["Toutes les news", "Hardware & Composants", "PC & Laptops", "Smartphones & Mobile", "Gaming", "Intelligence Artificielle"]
+)
+
+# --- NAVIGATION PRINCIPALE (HAUT DE PAGE) ---
 st.title("Revue de presse Tech")
 
 col_nav1, col_nav2, col_spacer = st.columns([1.2, 1.2, 4])
@@ -147,29 +163,47 @@ with col_nav2:
 
 st.divider()
 
-# --- AFFICHAGE ---
-search = st.sidebar.text_input("Rechercher un sujet").lower()
+# --- RÉCUPÉRATION ET FILTRAGE DES DONNÉES ---
 df = fetch_content(RSS_FEEDS if st.session_state.menu_selection == 'Articles' else YOUTUBE_CHANNELS, 
                    is_youtube=(st.session_state.menu_selection == 'Videos'))
 
 if not df.empty:
-    if search:
-        df = df[df['title'].str.lower().str.contains(search)]
     
-    cols = st.columns(4)
-    for idx, row in df.reset_index().iterrows():
-        with cols[idx % 4]:
-            summary_div = f'<div class="card-summary">{row["summary"]}</div>' if not row["is_video"] else '<div style="height:38px;"></div>'
-            st.markdown(f"""
-                <div class="card">
-                    <div style="overflow:hidden;"><img src="{row['image']}" class="card-img"></div>
-                    <div class="card-body">
-                        <div class="card-source">{row['source']}</div>
-                        <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
-                        {summary_div}
-                        <div class="card-date">Publié le {row['date'].strftime('%d %b %Y')}</div>
+    # Appliquer le filtre de recherche libre
+    if search_query:
+        # Regex case=False permet de chercher sans se soucier des majuscules/minuscules
+        df = df[df['title'].str.contains(search_query, case=False, regex=True, na=False)]
+        
+    # Appliquer le filtre de catégorie
+    if category != "Toutes les news":
+        keywords_dict = {
+            "Hardware & Composants": "cpu|gpu|nvidia|intel|amd|ryzen|rtx|radeon|carte mère|ssd|ram|processeur",
+            "PC & Laptops": "pc|ordinateur|laptop|clavier|souris|windows|macbook|dell|asus|lenovo|écran|moniteur",
+            "Smartphones & Mobile": "iphone|smartphone|android|samsung|pixel|mobile|ios|galaxy|xiaomi|honor|apple",
+            "Gaming": "jeu|ps5|xbox|nintendo|console|steam|gaming|playstation|switch",
+            "Intelligence Artificielle": "ia|ai|chatgpt|openai|gemini|llm|intelligence artificielle|copilot"
+        }
+        query = keywords_dict.get(category, "")
+        df = df[df['title'].str.contains(query, case=False, regex=True, na=False)]
+
+    # --- AFFICHAGE DE LA GRILLE ---
+    if not df.empty:
+        cols = st.columns(4)
+        for idx, row in df.reset_index().iterrows():
+            with cols[idx % 4]:
+                summary_div = f'<div class="card-summary">{row["summary"]}</div>' if not row["is_video"] else '<div style="height:38px;"></div>'
+                st.markdown(f"""
+                    <div class="card">
+                        <div style="overflow:hidden;"><img src="{row['image']}" class="card-img"></div>
+                        <div class="card-body">
+                            <div class="card-source">{row['source']}</div>
+                            <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
+                            {summary_div}
+                            <div class="card-date">Publié le {row['date'].strftime('%d %b %Y')}</div>
+                        </div>
                     </div>
-                </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
+    else:
+        st.warning(f"Aucune actualité ne correspond à la catégorie '{category}' ou à votre recherche.")
 else:
     st.info("Chargement des flux en cours...")
