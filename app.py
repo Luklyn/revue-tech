@@ -111,13 +111,22 @@ button[kind="secondary"]:hover { color: #fff !important; border-color: rgba(255,
     display: flex;
     flex-direction: column;
     transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
+    position: relative;  /* needed for stretch-link */
 }
 .card:hover {
     border-color: var(--red);
     transform: translateY(-4px);
     box-shadow: 0 12px 32px rgba(193,0,44,0.15);
 }
+/* Stretch the main title link to cover the entire card (CSS only, no JS) */
+.card-title a.stretch-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+/* Other links stay above the stretched overlay */
+.card-footer a { position: relative; z-index: 2; }
 .card-img-wrap { position: relative; width: 100%; height: 160px; overflow: hidden; background: #111; }
 .card-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
 .card:hover .card-img { transform: scale(1.04); }
@@ -299,15 +308,14 @@ def card_html(row):
     summary_block = f'<div class="card-summary">{row["summary"]}</div>' if row["summary"] else ""
     date_str = row["date"].strftime("%d %b %Y")
     return f"""
-    <div class="card" onclick="window.open('{row["link"]}','_blank')">
+    <div class="card">
         <div class="card-img-wrap">{img_block}</div>
         <div class="card-body">
             <div class="card-source">{row["source"]}</div>
-            <div class="card-title"><a href="{row["link"]}" target="_blank" onclick="event.stopPropagation()">{row["title"]}</a></div>
+            <div class="card-title"><a class="stretch-link" href="{row["link"]}" target="_blank">{row["title"]}</a></div>
             {summary_block}
             <div class="card-footer">
                 <span class="card-date">📅 {date_str}</span>
-                <span class="card-link-icon">↗</span>
             </div>
         </div>
     </div>
