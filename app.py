@@ -80,7 +80,6 @@ st.markdown("""
 
     header {visibility: hidden;}
     
-    /* Navigation Onglets */
     .stTabs [data-baseweb="tab-list"] {
         gap: 24px;
         border-bottom: 1px solid #eee;
@@ -92,4 +91,54 @@ st.markdown("""
         color: #888;
     }
     .stTabs [aria-selected="true"] {
-        color: #
+        color: #111 !important;
+        border-bottom-color: #111 !important;
+    }
+
+    .card {
+        background: #fff;
+        border: 1px solid #efefef;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        overflow: hidden;
+        height: 310px;
+        transition: all 0.2s ease;
+    }
+    .card:hover {
+        border-color: #bbb;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .card-img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+    }
+    .card-body { padding: 12px; }
+    .card-source {
+        color: #111;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+    .card-title {
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
+        margin-bottom: 8px;
+        height: 40px;
+        overflow: hidden;
+    }
+    .card-title a { text-decoration: none; color: #111; }
+    
+    .card-summary {
+        font-size: 13px;
+        color: #666;
+        line-height: 1.4;
+        height: 38px;
+        overflow: hidden;
+    }
+    .card-date {
+        font-size: 11px;
+        color: #999
