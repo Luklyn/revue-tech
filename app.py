@@ -86,3 +86,108 @@ st.markdown("""
     }
     .stTabs [data-baseweb="tab"] {
         height: 50px;
+        font-weight: 600;
+        font-size: 16px;
+        color: #888;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #111 !important;
+        border-bottom-color: #111 !important;
+    }
+
+    .card {
+        background: #fff;
+        border: 1px solid #efefef;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        overflow: hidden;
+        height: 310px;
+        transition: all 0.2s ease;
+    }
+    .card:hover {
+        border-color: #bbb;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .card-img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+    }
+    .card-body { padding: 12px; }
+    .card-source {
+        color: #111;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+    .card-title {
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
+        margin-bottom: 8px;
+        height: 40px;
+        overflow: hidden;
+    }
+    .card-title a { text-decoration: none; color: #111; }
+    
+    .card-summary {
+        font-size: 13px;
+        color: #666;
+        line-height: 1.4;
+        height: 38px;
+        overflow: hidden;
+    }
+    .card-date {
+        font-size: 11px;
+        color: #999;
+        margin-top: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- APPLICATION ---
+st.title("Tech Briefing")
+tab_presse, tab_video = st.tabs(["Articles", "Vidéos YouTube"])
+
+search = st.sidebar.text_input("Rechercher un sujet").lower()
+
+with tab_presse:
+    df_p = fetch_content(RSS_FEEDS)
+    if not df_p.empty:
+        if search: df_p = df_p[df_p['title'].str.lower().str.contains(search)]
+        
+        cols = st.columns(4)
+        for idx, row in df_p.reset_index().iterrows():
+            with cols[idx % 4]:
+                st.markdown(f"""
+                    <div class="card">
+                        <img src="{row['image']}" class="card-img">
+                        <div class="card-body">
+                            <div class="card-source">{row['source']}</div>
+                            <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
+                            <div class="card-summary">{row['summary']}</div>
+                            <div class="card-date">{row['date'].strftime('%d %b %Y')}</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+with tab_video:
+    df_v = fetch_content(YOUTUBE_CHANNELS, is_youtube=True)
+    if not df_v.empty:
+        if search: df_v = df_v[df_v['title'].str.lower().str.contains(search)]
+        
+        cols = st.columns(4)
+        for idx, row in df_v.reset_index().iterrows():
+            with cols[idx % 4]:
+                st.markdown(f"""
+                    <div class="card">
+                        <img src="{row['image']}" class="card-img">
+                        <div class="card-body">
+                            <div class="card-source">{row['source']}</div>
+                            <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
+                            <div class="card-date">{row['date'].strftime('%d %b %Y')}</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
