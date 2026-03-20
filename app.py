@@ -5,10 +5,10 @@ import pandas as pd
 import re
 import urllib.request
 
-# Configuration V6
+# Configuration V7
 st.set_page_config(page_title="Revue de presse Tech", page_icon="🖥️", layout="wide")
 
-# --- STYLE CSS V6 ---
+# --- STYLE CSS V7 ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -21,7 +21,7 @@ st.markdown(f"""
     h1 {{ 
         color: #ffffff !important; 
         font-family: 'Inter', sans-serif !important; 
-        text-align: center; 
+        text-align: left; /* CORRECTION : Alignement à gauche */
         font-weight: 800;
         margin-bottom: 20px; 
     }}
@@ -32,7 +32,7 @@ st.markdown(f"""
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px !important;
-        padding: 10px 15px !important;
+        padding: 8px 15px !important; /* Légèrement plus compact */
     }}
     .stTextInput>div>div>input:focus {{
         border-color: #c1002c !important;
@@ -124,8 +124,11 @@ if col_nav1.button("ARTICLES PRESSE", use_container_width=True, type="primary" i
 if col_nav2.button("VIDEOS YOUTUBE", use_container_width=True, type="primary" if st.session_state.view == 'Videos' else "secondary"):
     st.session_state.view = 'Videos'; st.rerun()
 
-# 2. Barre de recherche (Placée sous les boutons)
-search_query = st.text_input("", placeholder="Rechercher un sujet (ex: RTX 5090, Intel, Ryzen...)", label_visibility="collapsed")
+# 2. Barre de recherche (Réduite et centrée)
+st.write("") # Petit espacement
+col_search1, col_search2, col_search3 = st.columns([1, 2, 3]) # Structure pour réduire la largeur
+with col_search2:
+    search_query = st.text_input("", placeholder="Rechercher un sujet (ex: RTX 5090, Intel...)", label_visibility="collapsed")
 
 st.divider()
 
@@ -147,7 +150,7 @@ if not df.empty:
                         <div class="card-source">{row['source']}</div>
                         <div class="card-title"><a href="{row['link']}" target="_blank">{row['title']}</a></div>
                         {summary_div}
-                        <div class="card-date">Publié le {row['date'].strftime('%d %b %Y')}</div>
+                        <div class="card-date">{row['date'].strftime('%d %b %Y')}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
